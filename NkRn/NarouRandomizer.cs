@@ -17,12 +17,19 @@ public static class NarouRandomizer
             Console.WriteLine("Press enter to randomize a novel"); // TODO: or type 'q' to quit.
             Console.ReadLine();
 
+            Console.WriteLine("-----------------------------------------------");
+
             const int takeCount = 10;
             for (int i = 0; i < takeCount; ++i)
             {
                 var novel = novels[random.Next(novels.Count)];
-                Console.WriteLine(novel);
+                Console.Write(novel + ", ");
+                Utils.OpenUrlInBrowser($"https://ncode.syosetu.com/novelview/infotop/ncode/{novel.ToLower()}/");
             }
+
+            Console.Write("\n");
+
+            Console.WriteLine("-----------------------------------------------");
         }
     }
 
