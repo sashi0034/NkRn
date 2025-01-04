@@ -29,7 +29,7 @@ public static class NarouFetch
                 nextMinTextLength = batchResult.LastTextLength + 1;
 
                 Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write($"Fetching... {batchResult.RemainCount}");
+                Console.Write($"Fetching... {batchResult.RemainCount}        ");
             }
             catch (Exception e)
             {
