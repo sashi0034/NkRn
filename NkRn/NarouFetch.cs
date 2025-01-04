@@ -27,17 +27,23 @@ public static class NarouFetch
                 if (batchResult.RemainCount <= 0) break;
 
                 nextMinTextLength = batchResult.LastTextLength + 1;
+
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"Fetching... {batchResult.RemainCount}");
             }
             catch (Exception e)
             {
                 errorCount++;
                 if (errorCount >= maxErrorCount)
                 {
-                    Console.WriteLine($"[Error] Failed to fetch novels: {e.Message}");
+                    Console.WriteLine($"\n[Error] Failed to fetch novels: {e.Message}");
                     break;
                 }
             }
         }
+
+        Console.SetCursorPosition(0, Console.CursorTop);
+        Console.WriteLine($"Finished fetching novels: {novels.Count}");
 
         return new NarouNovels(novels);
     }

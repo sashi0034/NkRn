@@ -9,8 +9,6 @@ public static class NarouRandomizer
         int minTextLength = inputMinTextLength();
         var novels = (await NarouFetch.FetchAllNovels(minTextLength)).Novels;
 
-        Console.WriteLine("Fetched novels:");
-
         var random = new Random();
         while (true)
         {
