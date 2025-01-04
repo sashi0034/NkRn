@@ -13,15 +13,30 @@ public static class NarouFetch
     {
         int nextMinTextLength = minTextLength;
 
+        const int maxErrorCount = 3;
+        int errorCount = 0;
+
         List<string> novels = new();
         while (true)
         {
-            var batchResult = await fetchBatch(nextMinTextLength);
-            novels.AddRange(batchResult.Novels);
+            try
+            {
+                var batchResult = await fetchBatch(nextMinTextLength);
+                novels.AddRange(batchResult.Novels);
 
-            if (batchResult.RemainCount <= 0) break;
+                if (batchResult.RemainCount <= 0) break;
 
-            nextMinTextLength = batchResult.LastTextLength + 1;
+                nextMinTextLength = batchResult.LastTextLength + 1;
+            }
+            catch (Exception e)
+            {
+                errorCount++;
+                if (errorCount >= maxErrorCount)
+                {
+                    Console.WriteLine($"[Error] Failed to fetch novels: {e.Message}");
+                    break;
+                }
+            }
         }
 
         return new NarouNovels(novels);
