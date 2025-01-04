@@ -3,25 +3,23 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
 
+// https://dev.syosetu.com/man/api/
+
 namespace NkRn
 {
     static class Program
     {
         static async Task Main(string[] args)
         {
-            // Pythonコードと同じURL (※可能なら https にした方がよいです)
             string baseUrl = "https://api.syosetu.com/novelapi/api/";
 
-            // Pythonコードで指定していたパラメータ
-            // 'of': 't-w-n-k' => タイトル・あらすじ・Nコード・キーワードを取得
-            // 'word': '著作権フリー'
-            // 'keyword': '1' (部分一致 or キーワード検索指定)
-            // 'out': 'json' => JSON形式
             var parameters = new Dictionary<string, string>
             {
-                { "of", "t-w-n-k" },
-                { "word", "著作権フリー" },
-                { "keyword", "1" },
+                { "of", "t-n" }, // title, ncode を抽出 (https://dev.syosetu.com/man/api/#output)
+                { "notword", "女主人公" }, // 除外キーワード設定
+                { "keyword", "1" }, // notword を keyword へ適応
+                { "notbl", "1" },
+                { "minlen", "500000" }, // 作品本文の最小文字数を 50 万字以上に設定
                 { "out", "json" },
             };
 
@@ -30,9 +28,7 @@ namespace NkRn
             string queryString = buildQueryString(parameters);
             string requestUrl = $"{baseUrl}{queryString}";
 
-            // リクエスト実行
             using var httpClient = new HttpClient();
-
             httpClient.DefaultRequestHeaders.Add(
                 "User-Agent",
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
