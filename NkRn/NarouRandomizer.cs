@@ -20,9 +20,9 @@ public static class NarouRandomizer
             const int takeCount = 10;
             for (int i = 0; i < takeCount; ++i)
             {
-                var novel = novels[random.Next(novels.Count)];
+                var novel = novels[random.Next(novels.Count)].ToLower();
                 Console.Write(novel + ", ");
-                Utils.OpenUrlInBrowser($"https://ncode.syosetu.com/novelview/infotop/ncode/{novel.ToLower()}/");
+                Utils.OpenUrlInBrowser($"https://ncode.syosetu.com/novelview/infotop/ncode/{novel}/");
             }
 
             Console.Write("\n");
