@@ -7,7 +7,8 @@ public static class NarouRandomizer
     public static async Task Execute()
     {
         int minTextLength = inputMinTextLength();
-        var novels = (await NarouFetch.FetchAllNovels(minTextLength)).Novels;
+
+        var novels = await fetchNoels(minTextLength);
 
         var random = new Random();
         while (true)
@@ -29,6 +30,25 @@ public static class NarouRandomizer
 
             Console.WriteLine("-----------------------------------------------");
         }
+    }
+
+    private static async Task<List<string>> fetchNoels(int minTextLength)
+    {
+        var fetchedElement = LocalDatabase.Instance.Fetch($"narou:{minTextLength.ToString()}");
+        if (fetchedElement.Novels.Count > 0)
+        {
+            Console.WriteLine($"Last fetched: {fetchedElement.DateTime}");
+            Console.WriteLine($"Do you want to refresh the list? [y/N]");
+            var input = Console.ReadLine();
+            if (input?.ToLower() != "y") return fetchedElement.Novels;
+        }
+
+        var novels = (await NarouFetch.FetchAllNovels(minTextLength)).Novels;
+
+        fetchedElement.Update(novels);
+        LocalDatabase.Instance.Store();
+
+        return novels;
     }
 
     private static int inputMinTextLength()
