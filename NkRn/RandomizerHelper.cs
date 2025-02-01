@@ -32,7 +32,7 @@ public static class RandomizerHelper
         var fetchedElement = LocalDatabase.Instance.Fetch($"{baseKey}:{minTextLength.ToString()}");
         if (fetchedElement.Novels.Count > 0)
         {
-            Console.WriteLine($"Last fetched: {fetchedElement.DateTime}");
+            Console.WriteLine($"Last fetched: {fetchedElement.DateTime} ({fetchedElement.Novels.Count} novels)");
             Console.WriteLine($"Do you want to refresh the list? [y/N]");
             var input = Console.ReadLine();
             if (input?.ToLower() != "y") return fetchedElement.Novels;
