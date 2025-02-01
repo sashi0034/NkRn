@@ -6,6 +6,26 @@ internal static class Program
 {
     static void Main(string[] args)
     {
-        NarouRandomizer.Execute().Wait();
+        string modeIndex = args.Length > 0 ? args[0] : "";
+        if (modeIndex == "")
+        {
+            Console.WriteLine("Please specify the mode:"
+                              + "\n\tn - narou"
+                              + "\n\tk - kakuyomu");
+            modeIndex = Console.ReadLine() ?? "";
+        }
+
+        switch (modeIndex)
+        {
+        case "n":
+            NarouRandomizer.Execute().Wait();
+            break;
+        case "k":
+            KakuyomuRandomizer.Execute().Wait();
+            break;
+        default:
+            NarouRandomizer.Execute().Wait();
+            break;
+        }
     }
 }

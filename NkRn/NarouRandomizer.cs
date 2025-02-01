@@ -1,74 +1,146 @@
 ﻿#nullable enable
 
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
+
 namespace NkRn;
 
 public static class NarouRandomizer
 {
     public static async Task Execute()
     {
-        int minTextLength = inputMinTextLength();
+        Console.WriteLine("Narou Randomizer");
 
-        var novels = await fetchNoels(minTextLength);
+        var novels = await RandomizerHelper.FetchNovels("narou", FetchNarou);
 
-        var random = new Random();
-        while (true)
-        {
-            Console.WriteLine("Press enter to randomize a novel"); // TODO: or type 'q' to quit.
-            Console.ReadLine();
-
-            Console.WriteLine("-----------------------------------------------");
-
-            const int takeCount = 10;
-            for (int i = 0; i < takeCount; ++i)
-            {
-                var novel = novels[random.Next(novels.Count)].ToLower();
-                Console.Write(novel + ", ");
-                Utils.OpenUrlInBrowser($"https://ncode.syosetu.com/novelview/infotop/ncode/{novel}/");
-            }
-
-            Console.Write("\n");
-
-            Console.WriteLine("-----------------------------------------------");
-        }
+        RandomizerHelper.RandomizeLoop("https://ncode.syosetu.com/novelview/infotop/ncode", novels);
     }
 
-    private static async Task<List<string>> fetchNoels(int minTextLength)
+    public static async Task<List<string>> FetchNarou(int minTextLength)
     {
-        var fetchedElement = LocalDatabase.Instance.Fetch($"narou:{minTextLength.ToString()}");
-        if (fetchedElement.Novels.Count > 0)
+        int nextMinTextLength = minTextLength;
+
+        const int maxErrorCount = 3;
+        int errorCount = 0;
+
+        List<string> novels = new();
+        while (true)
         {
-            Console.WriteLine($"Last fetched: {fetchedElement.DateTime}");
-            Console.WriteLine($"Do you want to refresh the list? [y/N]");
-            var input = Console.ReadLine();
-            if (input?.ToLower() != "y") return fetchedElement.Novels;
+            try
+            {
+                var batchResult = await fetchBatch(nextMinTextLength);
+                novels.AddRange(batchResult.Novels);
+
+                if (batchResult.RemainCount <= 0) break;
+
+                nextMinTextLength = batchResult.LastTextLength + 1;
+
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"Fetching... {batchResult.RemainCount}        ");
+            }
+            catch (Exception e)
+            {
+                errorCount++;
+                if (errorCount >= maxErrorCount)
+                {
+                    Console.WriteLine($"\n[Error] Failed to fetch novels: {e.Message}");
+                    break;
+                }
+            }
         }
 
-        var novels = (await NarouFetch.FetchAllNovels(minTextLength)).Novels;
-
-        fetchedElement.Update(novels);
-        LocalDatabase.Instance.Store();
+        Console.SetCursorPosition(0, Console.CursorTop);
+        Console.WriteLine($"Finished fetching novels: {novels.Count}");
 
         return novels;
     }
 
-    private static int inputMinTextLength()
+    private record BatchResult(
+        List<string> Novels,
+        int RemainCount,
+        int LastTextLength);
+
+    private static async Task<BatchResult> fetchBatch(int minTextLength)
     {
-        const int defaultMinTextLength = 500000; // 50 万文字
-        const int minimumMinTextLength = 200000; // 20 千文字
+        string baseUrl = "https://api.syosetu.com/novelapi/api/";
 
-        while (true)
+        var parameters = new Dictionary<string, string>
         {
-            Console.Write(
-                $"Enter the minimum word count for the body of the novel (Default: {defaultMinTextLength}): ");
-            var input = Console.ReadLine();
-            if (string.IsNullOrEmpty(input)) return defaultMinTextLength;
+            { "of", "n-l" }, // ncode, length を抽出 (https://dev.syosetu.com/man/api/#output)
+            { "notword", "女主人公" }, // 除外キーワード設定
+            { "keyword", "1" }, // notword を keyword へ適応
+            { "notbl", "1" },
+            { "minlen", $"{minTextLength}" }, // 作品本文の最小文字数を設定
+            { "lim", "500" }, // 最大出力数
+            { "order", "lengthasc" }, // 作品本文の文字数が少ない順
+            { "out", "json" },
+        };
 
-            if (int.TryParse(input, out var minTextLength) && minTextLength >= minimumMinTextLength)
+        // QueryString を生成
+        // 例: "?of=t-w-n-k&word=%E8%91%97%E4%BD%9C%E6%A8%A9%E3%83%95%E3%83%AA%E3%83%BC&keyword=1&out=json"
+        string queryString = Utils.BuildQueryString(parameters);
+        string requestUrl = $"{baseUrl}{queryString}";
+
+        using var httpClient = Utils.GetHttpClient();
+
+        string responseString;
+        try
+        {
+            responseString = await httpClient.GetStringAsync(requestUrl);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error] Failed to get request: {ex.Message}");
+            throw;
+        }
+
+        // Handling JSON
+        try
+        {
+            using var document = JsonDocument.Parse(responseString);
+
+            int allocant = 0;
+            var novels = new List<string>();
+            int lastTextLength = 0;
+            foreach (var element in document.RootElement.EnumerateArray())
             {
-                return minTextLength;
+                if (element.TryGetProperty("allcount", out var allCountElem))
+                {
+                    allocant = allCountElem.GetInt32();
+                    continue;
+                }
+
+                if (element.TryGetProperty("length", out var lengthElem))
+                {
+                    lastTextLength = Math.Max(lastTextLength, lengthElem.GetInt32());
+                }
+
+                if (element.TryGetProperty("ncode", out var e))
+                {
+                    var s = e.GetString();
+                    if (s != null) novels.Add(s);
+                }
             }
 
-            Console.WriteLine($"Please enter a positive integer greater than or equal to {minimumMinTextLength}.");
+            return new BatchResult(novels, Math.Max(0, allocant - novels.Count), lastTextLength);
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error] Failed to parse json: {ex.Message}");
+            throw;
+        }
+    }
+
+    private static void debugPrintJson(JsonDocument document)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+        };
+
+        string prettyJson = JsonSerializer.Serialize(document.RootElement, jsonOptions);
+        Console.WriteLine(prettyJson);
     }
 }
