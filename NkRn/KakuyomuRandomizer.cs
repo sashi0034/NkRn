@@ -59,6 +59,10 @@ public static class KakuyomuRandomizer
         }
 
         novels = novels.Distinct().ToList();
+
+        Console.SetCursorPosition(0, Console.CursorTop);
+        Console.WriteLine($"Finished fetching novels: {novels.Count}");
+
         return novels;
     }
 
