@@ -62,6 +62,7 @@ public static class RandomizerHelper
                 var novel = novels[random.Next(novels.Count)].ToLower();
                 Console.Write(novel + ", ");
                 Utils.OpenUrlInBrowser($"{baseUri}/{novel}");
+                Thread.Sleep(100);
             }
 
             Console.Write("\n");
