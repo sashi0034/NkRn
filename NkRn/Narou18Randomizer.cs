@@ -6,15 +6,15 @@ using System.Text.Unicode;
 
 namespace NkRn;
 
-public static class NarouRandomizer
+public static class Narou18Randomizer
 {
     public static async Task Execute()
     {
-        Console.WriteLine("Narou Randomizer");
+        Console.WriteLine("Narou 18 Randomizer");
 
-        var novels = await RandomizerHelper.FetchNovels("narou", FetchNarou);
+        var novels = await RandomizerHelper.FetchNovels("narou18", FetchNarou);
 
-        RandomizerHelper.RandomizeLoop("https://ncode.syosetu.com/novelview/infotop/ncode", novels);
+        RandomizerHelper.RandomizeLoop("https://novel18.syosetu.com/novelview/infotop/ncode", novels);
     }
 
     public static async Task<List<string>> FetchNarou(int minTextLength)
@@ -63,18 +63,19 @@ public static class NarouRandomizer
 
     private static async Task<BatchResult> fetchBatch(int minTextLength)
     {
-        string baseUrl = "https://api.syosetu.com/novelapi/api/";
+        string baseUrl = "https://api.syosetu.com/novel18api/api/";
 
         var parameters = new Dictionary<string, string>
         {
             { "of", "n-l" }, // ncode, length を抽出 (https://dev.syosetu.com/man/api/#output)
-            //  { "notword", "女主人公" }, // 除外キーワード設定
+            // { "notword", "女主人公" }, // 除外キーワード設定
             { "keyword", "1" }, // notword を keyword へ適応
             { "notbl", "1" },
             { "minlen", $"{minTextLength}" }, // 作品本文の最小文字数を設定
             { "lim", "500" }, // 最大出力数
             { "order", "lengthasc" }, // 作品本文の文字数が少ない順
             { "out", "json" },
+            { "nocgenre", "1-4" } // ノクターンとミッドナイト
         };
 
         // QueryString を生成
