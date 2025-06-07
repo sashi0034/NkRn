@@ -7,7 +7,7 @@ public static class RandomizerHelper
     private static int inputMinTextLength()
     {
         const int defaultMinTextLength = 500000; // 50 万文字
-        const int minimumMinTextLength = 200000; // 20 千文字
+        const int minimumMinTextLength = 100000; // 10 千文字
 
         while (true)
         {
@@ -16,8 +16,16 @@ public static class RandomizerHelper
             var input = Console.ReadLine();
             if (string.IsNullOrEmpty(input)) return defaultMinTextLength;
 
-            if (int.TryParse(input, out var minTextLength) && minTextLength >= minimumMinTextLength)
+            if (int.TryParse(input, out var minTextLength))
             {
+                if (minTextLength >= minimumMinTextLength)
+                {
+                    return minTextLength;
+                }
+
+                Console.WriteLine($"The value will be multiplied by {minimumMinTextLength}.");
+
+                minTextLength *= minimumMinTextLength;
                 return minTextLength;
             }
 
@@ -28,6 +36,7 @@ public static class RandomizerHelper
     public static async Task<List<string>> FetchNovels(string baseKey, Func<int, Task<List<string>>> fetchFunc)
     {
         int minTextLength = inputMinTextLength();
+        Console.WriteLine($"Accepted minimum text length: {minTextLength}");
 
         var fetchedElement = LocalDatabase.Instance.Fetch($"{baseKey}:{minTextLength.ToString()}");
         if (fetchedElement.Novels.Count > 0)
