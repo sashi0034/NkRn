@@ -68,9 +68,9 @@ public static class NarouRandomizer
         var parameters = new Dictionary<string, string>
         {
             { "of", "n-l" }, // ncode, length を抽出 (https://dev.syosetu.com/man/api/#output)
-            { "notword", "女主人公" }, // 除外キーワード設定
+            // { "notword", "女主人公" }, // 除外キーワード設定
             { "keyword", "1" }, // notword を keyword へ適応
-            { "notbl", "1" },
+            // { "notbl", "1" },
             { "minlen", $"{minTextLength}" }, // 作品本文の最小文字数を設定
             { "lim", "500" }, // 最大出力数
             { "order", "lengthasc" }, // 作品本文の文字数が少ない順
