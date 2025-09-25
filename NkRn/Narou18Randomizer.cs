@@ -8,16 +8,18 @@ namespace NkRn;
 
 public static class Narou18Randomizer
 {
-    public static async Task Execute()
+    public static async Task Execute(bool onlyMidnight)
     {
         Console.WriteLine("Narou 18 Randomizer");
 
-        var novels = await RandomizerHelper.FetchNovels("narou18", FetchNarou);
+        string baseKey = onlyMidnight ? "narou18_midnight" : "narou18";
+        var novels =
+            await RandomizerHelper.FetchNovels(baseKey, minTextLength => FetchNarou(minTextLength, onlyMidnight));
 
         RandomizerHelper.RandomizeLoop("https://novel18.syosetu.com/novelview/infotop/ncode", novels);
     }
 
-    public static async Task<List<string>> FetchNarou(int minTextLength)
+    public static async Task<List<string>> FetchNarou(int minTextLength, bool onlyMidnight)
     {
         int nextMinTextLength = minTextLength;
 
@@ -29,7 +31,7 @@ public static class Narou18Randomizer
         {
             try
             {
-                var batchResult = await fetchBatch(nextMinTextLength);
+                var batchResult = await fetchBatch(nextMinTextLength, onlyMidnight);
                 novels.AddRange(batchResult.Novels);
 
                 if (batchResult.RemainCount <= 0) break;
@@ -61,7 +63,7 @@ public static class Narou18Randomizer
         int RemainCount,
         int LastTextLength);
 
-    private static async Task<BatchResult> fetchBatch(int minTextLength)
+    private static async Task<BatchResult> fetchBatch(int minTextLength, bool onlyMidnight)
     {
         string baseUrl = "https://api.syosetu.com/novel18api/api/";
 
@@ -75,7 +77,7 @@ public static class Narou18Randomizer
             { "lim", "500" }, // 最大出力数
             { "order", "lengthasc" }, // 作品本文の文字数が少ない順
             { "out", "json" },
-            { "nocgenre", "1-4" } // ノクターンとミッドナイト
+            { "nocgenre", onlyMidnight ? "4" : "1-4" } // ノクターン, ミッドナイト
         };
 
         // QueryString を生成

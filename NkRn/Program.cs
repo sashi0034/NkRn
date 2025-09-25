@@ -12,6 +12,7 @@ internal static class Program
             Console.WriteLine("Please specify the mode:"
                               + "\n\tn - narou"
                               + "\n\tnr - narou 18"
+                              + "\n\tnm - narou midnight"
                               + "\n\tk - kakuyomu");
             modeIndex = Console.ReadLine() ?? "";
         }
@@ -22,7 +23,10 @@ internal static class Program
             NarouRandomizer.Execute().Wait();
             break;
         case "nr":
-            Narou18Randomizer.Execute().Wait();
+            Narou18Randomizer.Execute(false).Wait();
+            break;
+        case "nm":
+            Narou18Randomizer.Execute(true).Wait();
             break;
         case "k":
             KakuyomuRandomizer.Execute().Wait();
